@@ -1,10 +1,17 @@
 'use client';
 
 import { useUser as useUserContext } from '@/context/UserContext';
+import { useRouter } from 'next/navigation';
 import styles from './profile.module.css';
 
 export default function ProfilePage() {
   const { user, userGenres, ratings, watchlist, logout } = useUserContext();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
 
   const reviewsCount = Object.keys(ratings).length;
 
@@ -74,7 +81,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <button className={styles.logoutBtn} onClick={logout}>SAIR</button>
+      <button className={styles.logoutBtn} onClick={handleLogout}>SAIR</button>
       <p className={styles.version}>VERSÃO 2.4.1 (NEON)</p>
     </div>
   );

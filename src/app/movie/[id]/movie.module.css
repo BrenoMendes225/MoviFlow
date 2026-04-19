@@ -89,20 +89,41 @@
   margin: 40px 0;
 }
 
-.watchNowBtn {
-  flex: 1;
-  background: var(--primary-gradient);
-  color: white;
-  padding: 16px;
+.providersSection {
+  flex: 2;
+  background: #1a1a1c;
+  padding: 12px 20px;
   border-radius: 30px;
-  font-weight: 800;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.providersTitle {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 1px;
+}
+
+.providersList {
+  display: flex;
+  gap: 12px;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: none;
-  font-size: 16px;
-  box-shadow: 0 10px 20px rgba(176, 102, 254, 0.3);
+  flex-wrap: wrap;
+}
+
+.providerLogo {
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.noProviders {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
 }
 
 .watchlistBtn {
@@ -117,8 +138,9 @@
   justify-content: center;
   gap: 10px;
   border: none;
-  font-size: 16px;
+  font-size: 14px;
 }
+
 
 .saved {
   background: rgba(176, 102, 254, 0.1);

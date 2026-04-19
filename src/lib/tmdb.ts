@@ -103,3 +103,9 @@ export const getRandomMovie = async () => {
   const randomIndex = Math.floor(Math.random() * data.results.length);
   return data.results[randomIndex];
 };
+
+export const getWatchProviders = async (id: string) => {
+  const data = await fetchTMDB(`/movie/${id}/watch/providers`);
+  return data.results?.BR || null; // Focado no Brasil
+};
+

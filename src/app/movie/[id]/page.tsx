@@ -3,8 +3,20 @@
 import { use, useState, useEffect } from 'react';
 import { Movie } from '@/data/movies';
 import { useUser } from '@/context/UserContext';
-import { getMovieDetails, mapToMovie } from '@/lib/tmdb';
+import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl } from '@/lib/tmdb';
 import styles from './movie.module.css';
+
+interface WatchProvider {
+  logo_path: string;
+  provider_name: string;
+}
+
+interface WatchProviders {
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+  link?: string;
+}
 
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -12,6 +24,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   
   const [movie, setMovie] = useState<Movie | null>(null);
   const [trailers, setTrailers] = useState<{ id: string; key: string; name: string; type: string }[]>([]);
+  const [providers, setProviders] = useState<WatchProviders | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRating, setUserRating] = useState(ratings[id]?.rating || 0);
   const [userReview, setUserReview] = useState(ratings[id]?.review || '');
@@ -20,10 +33,15 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const loadDetails = async () => {
       try {
-        const data = await getMovieDetails(id);
-        const mapped = mapToMovie(data);
+        const [movieData, providerData] = await Promise.all([
+          getMovieDetails(id),
+          getWatchProviders(id)
+        ]);
+        
+        const mapped = mapToMovie(movieData);
         setMovie(mapped);
-        setTrailers(data.videos?.results?.filter((v) => v.type === 'Trailer') || []);
+        setTrailers(movieData.videos?.results?.filter((v) => v.type === 'Trailer') || []);
+        setProviders(providerData);
         setIsSaved(watchlist.some(m => m.id === id));
       } catch (error) {
         console.error('Erro ao buscar detalhes:', error);
@@ -79,17 +97,30 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             <span className={styles.dot}>•</span>
             <span>{movie.genres[0]?.toUpperCase()}</span>
             <span className={styles.dot}>•</span>
-            <span>2H 15M</span>
-            <span className={styles.dot}>•</span>
             <span className={styles.quality}>4K HDR</span>
           </div>
         </div>
 
         <div className={styles.mainActions}>
-          <button className={styles.watchNowBtn}>
-            <span className={styles.playIcon}>▶</span>
-            Assistir Agora
-          </button>
+          <div className={styles.providersSection}>
+            <span className={styles.providersTitle}>DISPONÍVEL EM:</span>
+            <div className={styles.providersList}>
+              {providers?.flatrate ? (
+                providers.flatrate.map((p) => (
+                  <img 
+                    key={p.provider_name} 
+                    src={getImageUrl(p.logo_path)} 
+                    alt={p.provider_name} 
+                    title={p.provider_name}
+                    className={styles.providerLogo}
+                  />
+                ))
+              ) : (
+                <span className={styles.noProviders}>Não disponível em streaming no momento</span>
+              )}
+            </div>
+          </div>
+          
           <button 
             className={`${styles.watchlistBtn} ${isSaved ? styles.saved : ''}`}
             onClick={handleWatchlist}
