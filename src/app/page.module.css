@@ -1,0 +1,189 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  background: #0f0f10;
+}
+
+.backgroundBlur {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
+  background: radial-gradient(circle at 30% 30%, rgba(176, 102, 254, 0.15), transparent 40%),
+              radial-gradient(circle at 70% 70%, rgba(140, 66, 255, 0.15), transparent 40%);
+  filter: blur(80px);
+  z-index: 0;
+}
+
+.loginCard {
+  background: #1a1a1c;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  color: white;
+}
+
+.subtitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inputGroup label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 1px;
+}
+
+.forgot {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.inputGroup input {
+  background: #121214;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  color: white;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.inputGroup input:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.loginBtn {
+  margin-top: 10px;
+  padding: 18px;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(176, 102, 254, 0.3);
+  transition: all 0.3s ease;
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 25px rgba(176, 102, 254, 0.4);
+}
+
+.divider {
+  margin: 30px 0;
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  z-index: 0;
+}
+
+.divider span {
+  background: #1a1a1c;
+  padding: 0 15px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.socialRow {
+  display: flex;
+  gap: 15px;
+}
+
+.socialBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 14px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.socialBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.socialBtn img, .socialBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.signup {
+  color: var(--accent);
+  font-weight: 700;
+}

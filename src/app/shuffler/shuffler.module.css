@@ -1,0 +1,206 @@
+.container {
+  padding: 40px 25px 120px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.badge {
+  background: rgba(176, 102, 254, 0.1);
+  color: var(--primary);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.header h1 span {
+  color: var(--primary);
+}
+
+.header p {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}
+
+.slotMachine {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.display {
+  background: #1a1a1c;
+  border-radius: 32px;
+  height: 450px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.questionMark {
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.05);
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.3;
+}
+
+.placeholder p {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 2px;
+}
+
+.shufflingAnimation {
+  height: 100%;
+  overflow: hidden;
+}
+
+.filmStrip {
+  display: flex;
+  flex-direction: column;
+  animation: slideStrip 0.5s infinite linear;
+}
+
+.filmStrip img {
+  width: 100%;
+  height: 450px;
+  object-fit: cover;
+  opacity: 0.5;
+  filter: grayscale(1) blur(2px);
+}
+
+@keyframes slideStrip {
+  from { transform: translateY(0); }
+  to { transform: translateY(-450px); }
+}
+
+.result {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.posterWrapper {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.posterWrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.neonGlow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(to top, #1a1a1c, transparent);
+}
+
+.resultInfo {
+  padding: 25px;
+  background: #1a1a1c;
+  position: relative;
+}
+
+.matchTag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.resultInfo h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 20px;
+}
+
+.viewBtn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: white;
+  color: black;
+  text-align: center;
+  border-radius: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.shuffleBtn {
+  width: 100%;
+  padding: 22px;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 24px;
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(176, 102, 254, 0.3);
+  transition: all 0.3s ease;
+}
+
+.shuffleBtn:active {
+  transform: scale(0.98);
+}
+
+.shuffleBtn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.btnIcon {
+  font-size: 20px;
+}
