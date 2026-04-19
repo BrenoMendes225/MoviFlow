@@ -144,6 +144,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <form onSubmit={handleSubmitReview}>
             <textarea 
+              className={styles.reviewInput}
               placeholder="Compartilhe sua opinião sobre o filme..."
               value={userReview}
               onChange={(e) => setUserReview(e.target.value)}
