@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import styles from './page.module.css';
 
 export default function LandingPage() {
@@ -13,6 +13,8 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const { isLoggedIn } = useUser();
   const router = useRouter();
+  
+  const supabase = createClient();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -43,7 +45,12 @@ export default function LandingPage() {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    await supabase.auth.signInWithOAuth({ provider });
+    await supabase.auth.signInWithOAuth({ 
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
   };
 
   return (

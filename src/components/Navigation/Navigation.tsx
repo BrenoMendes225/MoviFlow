@@ -7,7 +7,7 @@ import styles from './Navigation.module.css';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { isLoggedIn, logout } = useUser();
+  const { isLoggedIn } = useUser();
 
   if (!isLoggedIn) return null;
 

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/data/movies';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
 interface UserContextType {
@@ -15,6 +15,7 @@ interface UserContextType {
   ratings: Record<string, { rating: number; review: string }>;
   addRating: (movieId: string, rating: number, review: string) => Promise<void>;
   isLoggedIn: boolean;
+  loading: boolean;
   logout: () => Promise<void>;
 }
 
@@ -26,11 +27,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [watchlist, setWatchlist] = useState<Movie[]>([]);
   const [ratings, setRatings] = useState<Record<string, { rating: number; review: string }>>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  const supabase = createClient();
 
   const resetState = useCallback(() => {
     setUserGenresState([]);
     setWatchlist([]);
     setRatings({});
+    setIsLoggedIn(false);
+    setUser(null);
   }, []);
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -81,66 +87,105 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       setIsLoggedIn(!!session);
-      if (session?.user) fetchUserData(session.user.id);
-    });
+      if (session?.user) {
+        await fetchUserData(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const newUser = session?.user ?? null;
+      setUser(newUser);
       setIsLoggedIn(!!session);
+      
       if (session?.user) {
         fetchUserData(session.user.id);
       } else {
         resetState();
+        setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchUserData, resetState]);
+  }, [fetchUserData, resetState, supabase.auth]);
 
   const setUserGenres = async (genres: string[]) => {
     if (!user) return;
     setUserGenresState(genres);
-    await supabase.from('profiles').upsert({ id: user.id, genres, updated_at: new Date() });
+    await supabase.from('profiles').upsert({ id: user.id, genres, updated_at: new Date().toISOString() });
   };
 
   const addToWatchlist = async (movie: Movie) => {
     if (!user) return;
-    const newList = [...watchlist, movie];
-    setWatchlist(newList);
-    await supabase.from('watchlist').insert({ user_id: user.id, movie_id: movie.id });
+    // Optimistic update
+    setWatchlist(prev => [...prev, movie]);
+    const { error } = await supabase.from('watchlist').insert({ user_id: user.id, movie_id: movie.id });
+    if (error) {
+      console.error('Error adding to watchlist:', error);
+      // Rollback on error
+      setWatchlist(prev => prev.filter(m => m.id !== movie.id));
+    }
   };
 
   const removeFromWatchlist = async (movieId: string) => {
     if (!user) return;
-    const newList = watchlist.filter((m) => m.id !== movieId);
-    setWatchlist(newList);
-    await supabase.from('watchlist').delete().eq('user_id', user.id).eq('movie_id', movieId);
+    // Optimistic update
+    const movieToRemove = watchlist.find(m => m.id === movieId);
+    setWatchlist(prev => prev.filter((m) => m.id !== movieId));
+    
+    const { error } = await supabase.from('watchlist').delete().eq('user_id', user.id).eq('movie_id', movieId);
+    if (error && movieToRemove) {
+      console.error('Error removing from watchlist:', error);
+      // Rollback on error
+      setWatchlist(prev => [...prev, movieToRemove]);
+    }
   };
 
   const addRating = async (movieId: string, rating: number, review: string) => {
     if (!user) return;
-    const newRatings = { ...ratings, [movieId]: { rating, review } };
-    setRatings(newRatings);
-    await supabase.from('ratings').upsert({ 
+    const oldRating = ratings[movieId];
+    setRatings(prev => ({ ...prev, [movieId]: { rating, review } }));
+    
+    const { error } = await supabase.from('ratings').upsert({ 
       user_id: user.id, 
       movie_id: movieId, 
       rating, 
       review,
-      created_at: new Date()
+      created_at: new Date().toISOString()
     });
+
+    if (error) {
+      console.error('Error adding rating:', error);
+      if (oldRating) {
+        setRatings(prev => ({ ...prev, [movieId]: oldRating }));
+      } else {
+        setRatings(prev => {
+          const newState = { ...prev };
+          delete newState[movieId];
+          return newState;
+        });
+      }
+    }
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
+    resetState();
   };
 
   return (
@@ -155,6 +200,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         ratings,
         addRating,
         isLoggedIn,
+        loading,
         logout,
       }}
     >

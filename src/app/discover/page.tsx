@@ -8,7 +8,7 @@ import Link from 'next/link';
 import styles from './discover.module.css';
 
 export default function DiscoverPage() {
-  const { userGenres } = useUser();
+  const { userGenres, watchlist, addToWatchlist, removeFromWatchlist } = useUser();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -54,7 +54,19 @@ export default function DiscoverPage() {
                   <span className={styles.playIcon}>▶</span>
                   Assistir Agora
                 </Link>
-                <button className={styles.plusBtn}>+</button>
+                <button 
+                  className={`${styles.plusBtn} ${watchlist.some(m => m.id === featured.id) ? styles.saved : ''}`}
+                  onClick={() => {
+                    if (watchlist.some(m => m.id === featured.id)) {
+                      removeFromWatchlist(featured.id);
+                    } else {
+                      addToWatchlist(featured);
+                    }
+                  }}
+                  title="Adicionar à lista"
+                >
+                  {watchlist.some(m => m.id === featured.id) ? '✓' : '+'}
+                </button>
               </div>
             </div>
           </div>

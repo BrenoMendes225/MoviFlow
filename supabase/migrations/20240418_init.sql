@@ -25,10 +25,24 @@ CREATE TABLE IF NOT EXISTS ratings (
   UNIQUE(user_id, movie_id)
 );
 
+-- Create movies_cache table (optional but good for performance)
+CREATE TABLE IF NOT EXISTS movies_cache (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  poster TEXT,
+  backdrop TEXT,
+  rating FLOAT,
+  year TEXT,
+  genres TEXT[],
+  synopsis TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE watchlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE movies_cache ENABLE ROW LEVEL SECURITY;
 
 -- Policies for profiles
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
@@ -45,6 +59,13 @@ CREATE POLICY "Users can view own ratings" ON ratings FOR SELECT USING (auth.uid
 CREATE POLICY "Users can insert own ratings" ON ratings FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own ratings" ON ratings FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own ratings" ON ratings FOR DELETE USING (auth.uid() = user_id);
+
+-- Policies for movies_cache (everyone can read)
+CREATE POLICY "Anyone can view movie cache" ON movies_cache FOR SELECT USING (true);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id);
 
 -- Trigger to create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
