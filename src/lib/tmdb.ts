@@ -2,6 +2,18 @@ const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
+export interface WatchProvider {
+  logo_path: string;
+  provider_name: string;
+}
+
+export interface WatchProviders {
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+  link?: string;
+}
+
 export interface TMDBMovie {
   id: number;
   title?: string;
@@ -19,7 +31,7 @@ export interface TMDBMovie {
     crew: { name: string; job: string }[];
   };
   videos?: {
-    results: { key: string; type: string; site: string }[];
+    results: { id: string; key: string; name: string; type: string; site: string }[];
   };
 }
 
@@ -106,6 +118,6 @@ export const getRandomMovie = async () => {
 
 export const getWatchProviders = async (id: string) => {
   const data = await fetchTMDB(`/movie/${id}/watch/providers`);
-  return data.results?.BR || null; // Focado no Brasil
+  return (data.results?.BR || null) as WatchProviders | null;
 };
 

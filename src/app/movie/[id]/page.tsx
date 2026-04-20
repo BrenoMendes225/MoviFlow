@@ -3,20 +3,8 @@
 import { use, useState, useEffect } from 'react';
 import { Movie } from '@/data/movies';
 import { useUser } from '@/context/UserContext';
-import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl } from '@/lib/tmdb';
+import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl, WatchProviders } from '@/lib/tmdb';
 import styles from './movie.module.css';
-
-interface WatchProvider {
-  logo_path: string;
-  provider_name: string;
-}
-
-interface WatchProviders {
-  flatrate?: WatchProvider[];
-  rent?: WatchProvider[];
-  buy?: WatchProvider[];
-  link?: string;
-}
 
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
