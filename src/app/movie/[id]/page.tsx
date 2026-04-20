@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from 'react';
 import { Movie } from '@/data/movies';
 import { useUser } from '@/context/UserContext';
-import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl, WatchProviders, TMDBMovie } from '@/lib/tmdb';
+import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl, WatchProviders, TMDBMovie, getNowPlayingMovies } from '@/lib/tmdb';
 import styles from './movie.module.css';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +14,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   const [rawMovie, setRawMovie] = useState<TMDBMovie | null>(null);
   const [trailers, setTrailers] = useState<{ id: string; key: string; name: string; type: string }[]>([]);
   const [providers, setProviders] = useState<WatchProviders | null>(null);
+  const [isNowPlaying, setIsNowPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userRating, setUserRating] = useState(ratings[id]?.rating || 0);
   const [userReview, setUserReview] = useState(ratings[id]?.review || '');
@@ -22,15 +23,20 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const loadDetails = async () => {
       try {
-        const [movieData, providerData] = await Promise.all([
+        const [movieData, providerData, nowPlayingData] = await Promise.all([
           getMovieDetails(id),
-          getWatchProviders(id)
+          getWatchProviders(id),
+          getNowPlayingMovies()
         ]);
         
         setRawMovie(movieData);
         const mapped = mapToMovie(movieData);
         setMovie(mapped);
         
+        // Verificar se está em cartaz
+        const inTheaters = nowPlayingData.some(m => m.id === Number(id));
+        setIsNowPlaying(inTheaters);
+
         const rawTrailers = movieData.videos?.results?.filter((v) => v.type === 'Trailer') || [];
         setTrailers(rawTrailers.map(t => ({
           id: t.id || t.key,
@@ -102,7 +108,10 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
 
       <div className={styles.content}>
         <div className={styles.header}>
-          <div className={styles.ratingBadge}>★ {movie.rating}</div>
+          <div className={styles.badgesRow}>
+            <div className={styles.ratingBadge}>★ {movie.rating}</div>
+            {isNowPlaying && <div className={styles.theaterBadge}>NOS CINEMAS</div>}
+          </div>
           <h1>{movie.title}</h1>
           <div className={styles.meta}>
             <span>{movie.year}</span>
@@ -127,6 +136,8 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
                     className={styles.providerLogo}
                   />
                 ))
+              ) : isNowPlaying ? (
+                <span className={styles.theatersInfo}>EXCLUSIVO NOS CINEMAS</span>
               ) : (
                 <span className={styles.noProviders}>Não disponível no streaming</span>
               )}

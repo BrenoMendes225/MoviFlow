@@ -2,36 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { Movie } from '@/data/movies';
-import { getTrendingMovies, mapToMovie } from '@/lib/tmdb';
+import { getTrendingMovies, mapToMovie, getRandomMovie } from '@/lib/tmdb';
 import Link from 'next/link';
 import styles from './shuffler.module.css';
 
 export default function ShufflerPage() {
   const [randomMovie, setRandomMovie] = useState<Movie | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
-  const [pool, setPool] = useState<Movie[]>([]);
 
-  useEffect(() => {
-    const loadPool = async () => {
-      const trending = await getTrendingMovies();
-      setPool(trending.map(mapToMovie));
-    };
-    loadPool();
-  }, []);
-
-  const handleShuffle = () => {
+  const handleShuffle = async () => {
     setIsShuffling(true);
     setRandomMovie(null);
     
-    // Animação de sorteio
-    setTimeout(() => {
-      const random = pool[Math.floor(Math.random() * pool.length)];
-      setRandomMovie(random);
+    try {
+      const tmdbMovie = await getRandomMovie();
+      const movie = mapToMovie(tmdbMovie);
       
+      // Animação de sorteio (Dados 3D)
       setTimeout(() => {
+        setRandomMovie(movie);
         setIsShuffling(false);
-      }, 1500);
-    }, 2000);
+      }, 2500);
+    } catch (error) {
+      console.error('Erro ao sortear:', error);
+      setIsShuffling(false);
+    }
   };
 
   return (
@@ -41,17 +36,22 @@ export default function ShufflerPage() {
       <div className={styles.header}>
         <span className={styles.badge}>DÚVIDA CRUEL?</span>
         <h1>Cine<span>Sorteio</span></h1>
-        <p>Deixe o destino escolher sua próxima experiência cinematográfica.</p>
+        <p>A sorte está lançada. Deixe o destino escolher por você.</p>
       </div>
 
       <div className={styles.shufflerContainer}>
         <div className={styles.slotMachine}>
           <div className={`${styles.display} ${isShuffling ? styles.isShuffling : ''}`}>
             {isShuffling ? (
-              <div className={styles.reel}>
-                {pool.slice(0, 10).map((m, i) => (
-                  <img key={i} src={m.poster} alt="" className={styles.reelImg} />
-                ))}
+              <div className={styles.diceContainer}>
+                <div className={styles.dice}>
+                  <div className={`${styles.face} ${styles.front}`}>1</div>
+                  <div className={`${styles.face} ${styles.back}`}>6</div>
+                  <div className={`${styles.face} ${styles.right}`}>3</div>
+                  <div className={`${styles.face} ${styles.left}`}>4</div>
+                  <div className={`${styles.face} ${styles.top}`}>5</div>
+                  <div className={`${styles.face} ${styles.bottom}`}>2</div>
+                </div>
               </div>
             ) : randomMovie ? (
               <div className={styles.resultContainer}>
@@ -60,18 +60,18 @@ export default function ShufflerPage() {
                   <div className={styles.ratingBadge}>★ {randomMovie.rating}</div>
                 </div>
                 <div className={styles.resultInfo}>
-                  <span className={styles.matchTag}>SEU FILME DE HOJE</span>
+                  <span className={styles.matchTag}>RESULTADO DOS DADOS</span>
                   <h2>{randomMovie.title}</h2>
                   <p>{randomMovie.genres.join(' • ')}</p>
                   <Link href={`/movie/${randomMovie.id}`} className={styles.viewBtn}>
-                    VER DETALHES
+                    DETALHES DO FILME
                   </Link>
                 </div>
               </div>
             ) : (
               <div className={styles.placeholder}>
                 <div className={styles.questionMark}>?</div>
-                <p>PRONTO PARA O SORTEIO?</p>
+                <p>LANÇAR OS DADOS</p>
               </div>
             )}
           </div>
@@ -80,10 +80,10 @@ export default function ShufflerPage() {
         <button 
           className={styles.shuffleBtn} 
           onClick={handleShuffle}
-          disabled={isShuffling || pool.length === 0}
+          disabled={isShuffling}
         >
           <span className={styles.btnIcon}>🎲</span>
-          {isShuffling ? 'ESCOLHENDO...' : 'SORTEAR AGORA'}
+          {isShuffling ? 'LANÇANDO...' : 'JOGAR DADOS'}
         </button>
       </div>
     </div>

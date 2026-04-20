@@ -114,10 +114,20 @@ export const getMoviesByGenre = async (genreId: string) => {
 };
 
 export const getRandomMovie = async () => {
-  const randomPage = Math.floor(Math.random() * 10) + 1;
-  const data = await fetchTMDB('/discover/movie', { page: randomPage.toString() });
+  // Aumentando para as primeiras 20 páginas (400 filmes) para máxima variedade
+  const randomPage = Math.floor(Math.random() * 20) + 1;
+  const data = await fetchTMDB('/discover/movie', { 
+    page: randomPage.toString(),
+    'vote_count.gte': '500', // Apenas filmes com relevância
+    sort_by: 'popularity.desc'
+  });
   const randomIndex = Math.floor(Math.random() * data.results.length);
   return data.results[randomIndex];
+};
+
+export const getNowPlayingMovies = async () => {
+  const data = await fetchTMDB('/movie/now_playing', { region: 'BR' });
+  return data.results as TMDBMovie[];
 };
 
 export const getWatchProviders = async (id: string) => {
