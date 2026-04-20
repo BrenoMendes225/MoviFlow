@@ -6,10 +6,11 @@ import { searchMovies, mapToMovie } from '@/lib/tmdb';
 import { Movie } from '@/data/movies';
 import styles from './Header.module.css';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Header() {
   const { isLoggedIn } = useUser();
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Movie[]>([]);
@@ -75,6 +76,7 @@ export default function Header() {
   };
 
   if (!isLoggedIn) return null;
+  if (pathname.startsWith('/onboarding')) return null;
 
   return (
     <header className={styles.header}>

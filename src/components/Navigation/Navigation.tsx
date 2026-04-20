@@ -10,6 +10,7 @@ export default function Navigation() {
   const { isLoggedIn } = useUser();
 
   if (!isLoggedIn) return null;
+  if (pathname.startsWith('/onboarding')) return null;
 
   return (
     <nav className={styles.nav}>
