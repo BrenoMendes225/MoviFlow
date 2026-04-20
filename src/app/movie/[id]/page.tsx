@@ -28,7 +28,13 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
         
         const mapped = mapToMovie(movieData);
         setMovie(mapped);
-        setTrailers(movieData.videos?.results?.filter((v) => v.type === 'Trailer') || []);
+        const rawTrailers = movieData.videos?.results?.filter((v) => v.type === 'Trailer') || [];
+        setTrailers(rawTrailers.map(t => ({
+          id: t.id || t.key,
+          key: t.key,
+          name: t.name || 'Trailer',
+          type: t.type
+        })));
         setProviders(providerData);
         setIsSaved(watchlist.some(m => m.id === id));
       } catch (error) {
