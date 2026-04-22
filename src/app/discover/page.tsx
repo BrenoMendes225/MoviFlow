@@ -15,7 +15,7 @@ function getDailyKey() {
 
 function getCachedRecommendations(): Movie[] | null {
   try {
-    const cached = localStorage.getItem('curator_recommendations');
+    const cached = localStorage.getItem('curator_recommendations_v2'); // Versão 2 para forçar reset
     if (!cached) return null;
     const { key, movies } = JSON.parse(cached);
     if (key !== getDailyKey()) return null; // Expirado — novo dia
@@ -27,7 +27,7 @@ function getCachedRecommendations(): Movie[] | null {
 
 function setCachedRecommendations(movies: Movie[]) {
   try {
-    localStorage.setItem('curator_recommendations', JSON.stringify({
+    localStorage.setItem('curator_recommendations_v2', JSON.stringify({
       key: getDailyKey(),
       movies,
     }));
@@ -36,9 +36,7 @@ function setCachedRecommendations(movies: Movie[]) {
 
 export default function DiscoverPage() {
   const { userGenres, watchlist, addToWatchlist, removeFromWatchlist } = useUser();
-  const [trending, setTrending] = useState<Movie[]>([]);
   const [recommended, setRecommended] = useState<Movie[]>([]);
-  const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,36 +49,41 @@ export default function DiscoverPage() {
         // ── 2. Recomendações com cache de 24h (Filtradas por Gênero e SEM cinema) ──
         const cached = getCachedRecommendations();
         if (cached && cached.length > 0) {
-          // Filtrar cache também caso algo tenha entrado no cinema
           setRecommended(cached.filter(m => !nowPlayingIds.includes(m.id)));
         } else if (userGenres.length > 0) {
           const randomPage = Math.floor(Math.random() * 5) + 1;
-          // getDiscoverMovies agora aceita excludeIds e lida com mapeamento de nomes para IDs
           const fresh = await getDiscoverMovies(userGenres, randomPage.toString(), nowPlayingIds);
           const mapped = fresh
-            .filter(m => m.poster_path && m.backdrop_path && m.overview && m.overview.trim() !== '')
-            .slice(0, 12)
+            .filter(m => 
+              m.poster_path && 
+              m.backdrop_path && 
+              m.overview && 
+              m.overview.trim() !== '' &&
+              !m.title?.toLowerCase().includes('too many cooks') &&
+              !m.title?.toLowerCase().includes('cooks')
+            )
+            .slice(0, 18)
             .map(mapToMovie);
           
-          // Verify filtering
-          const overlap = mapped.filter(m => nowPlayingIds.includes(m.id));
-          console.log('Verification: Movies in both recommended and nowPlaying:', overlap.length === 0 ? 'None (Pass)' : overlap);
-          
           setCachedRecommendations(mapped);
-          setRecommended(mapped);
+        setRecommended(mapped);
+        } else {
+          // Fallback se não houver gêneros ou recomendações
+          const trendingData = await getTrendingMovies();
+          const tmdbTrending = trendingData
+            .filter((m: any) => 
+              m.poster_path && 
+              m.backdrop_path && 
+              m.overview && 
+              m.overview.trim() !== '' &&
+              !m.title?.toLowerCase().includes('too many cooks') &&
+              !m.title?.toLowerCase().includes('cooks')
+            )
+            .map(mapToMovie);
+          setRecommended(tmdbTrending.slice(0, 18));
         }
-
-        // ── 3. Tendências (SEM cinema) ──
-        const trendingData = await getTrendingMovies();
-        const tmdbTrending = trendingData
-          .filter((m: any) => m.poster_path && m.backdrop_path && m.overview && m.overview.trim() !== '')
-          .map(mapToMovie)
-          .filter((m: Movie) => !nowPlayingIds.includes(m.id) && m.title !== 'Too Many Cooks');
-        
-        setTrending(tmdbTrending);
       } catch (error) {
         console.error('Erro ao carregar filmes:', error);
-
       } finally {
         setLoading(false);
       }
@@ -98,7 +101,7 @@ export default function DiscoverPage() {
     );
   }
 
-  const featured = trending[0];
+  const featured = recommended[0];
 
 
   return (
@@ -131,31 +134,32 @@ export default function DiscoverPage() {
         </section>
       )}
 
-      {/* ── Seção removida: Nos Cinemas ── */}
 
 
-      {/* ── Recomendados Para Você (Removido a pedido) ── */}
 
-      {/* ── Catálogo Geral ── */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>Explorar Catálogo</h2>
-        </div>
-        <div className={styles.movieGrid}>
-          {trending.slice(0, 18).map(movie => (
-            <Link href={`/movie/${movie.id}`} key={movie.id} className={styles.movieCard}>
-              <div className={styles.posterWrapper}>
-                <img src={movie.poster} alt={movie.title} />
-                <div className={styles.ratingBadge}>★ {movie.rating}</div>
-              </div>
-              <div className={styles.movieInfo}>
-                <h3>{movie.title}</h3>
-                <p>{(movie.genres[0] || 'FILME').toUpperCase()}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* ── Recomendados Para Você (18 filmes, rotação diária) ── */}
+      {recommended.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>Recomendados Para Você</h2>
+            <span className={styles.refreshBadge}>🔄 Novos filmes todo dia</span>
+          </div>
+          <div className={styles.movieGrid}>
+            {recommended.map(movie => (
+              <Link href={`/movie/${movie.id}`} key={movie.id} className={styles.movieCard}>
+                <div className={styles.posterWrapper}>
+                  <img src={movie.poster} alt={movie.title} />
+                  <div className={styles.ratingBadge}>★ {movie.rating}</div>
+                </div>
+                <div className={styles.movieInfo}>
+                  <h3>{movie.title}</h3>
+                  <p>{(movie.genres[0] || 'FILME').toUpperCase()}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

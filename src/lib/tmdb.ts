@@ -63,6 +63,8 @@ const GENRE_MAP: Record<number, string> = {
 
 import { Movie } from '@/data/movies';
 
+const BANNED_TITLES = ['too many cooks', 'cooks', 'short film', 'special'];
+
 export const mapToMovie = (tmdbMovie: TMDBMovie): Movie => ({
   id: tmdbMovie.id.toString(),
   title: tmdbMovie.title || tmdbMovie.name || 'Sem título',
@@ -97,16 +99,20 @@ export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') =>
 export const getTrendingMovies = async () => {
   // Use discover instead of trending to strictly filter out movies in theaters (recent 4 months)
   const d = new Date();
-  d.setMonth(d.getMonth() - 4);
+  d.setMonth(d.getMonth() - 5);
   const maxDate = d.toISOString().split('T')[0];
 
   const data = await fetchTMDB('/discover/movie', {
     sort_by: 'popularity.desc',
-    'vote_count.gte': '300',
+    'vote_count.gte': '1000',
+    'vote_average.gte': '7.0',
     'primary_release_date.lte': maxDate,
-    'with_runtime.gte': '60'
+    'with_runtime.gte': '75',
+    'with_original_language': 'en|pt|fr|es|it|ja|ko'
   });
-  return data.results;
+  return data.results.filter((m: any) => 
+    !BANNED_TITLES.some(banned => m.title?.toLowerCase().includes(banned))
+  );
 };
 
 export const getMovieDetails = async (id: string): Promise<TMDBMovie> => {
@@ -126,13 +132,26 @@ export const getMoviesByGenre = async (genreId: string) => {
 export const getRandomMovie = async () => {
   // Aumentando para as primeiras 20 páginas (400 filmes) para máxima variedade
   const randomPage = Math.floor(Math.random() * 20) + 1;
+  const d = new Date();
+  d.setMonth(d.getMonth() - 5);
+  const maxDate = d.toISOString().split('T')[0];
+
   const data = await fetchTMDB('/discover/movie', { 
     page: randomPage.toString(),
-    'vote_count.gte': '500', // Apenas filmes com relevância
+    'vote_count.gte': '800', 
+    'vote_average.gte': '6.8',
+    'primary_release_date.lte': maxDate,
+    'with_runtime.gte': '75',
     sort_by: 'popularity.desc'
   });
   
-  const validResults = data.results.filter((m: TMDBMovie) => m.poster_path && m.backdrop_path && m.overview && m.overview.trim() !== '');
+  const validResults = data.results.filter((m: TMDBMovie) => 
+    m.poster_path && 
+    m.backdrop_path && 
+    m.overview && 
+    m.overview.trim() !== '' &&
+    !BANNED_TITLES.some(banned => m.title?.toLowerCase().includes(banned))
+  );
   if (validResults.length === 0) return data.results[0]; // fallback
   
   const randomIndex = Math.floor(Math.random() * validResults.length);
@@ -166,16 +185,17 @@ export const getDiscoverMovies = async (genres: string[], page = '1', excludeIds
 
   const params: Record<string, string> = {
     sort_by: 'popularity.desc',
-    'vote_count.gte': '500',
-    'vote_average.gte': '6.5',
+    'vote_count.gte': '1000', // Apenas filmes com relevância comprovada
+    'vote_average.gte': '7.0',  // Apenas filmes bem avaliados
     page,
-    'primary_release_date.gte': '2000-01-01',
+    'primary_release_date.gte': '1970-01-01', // Evitar filmes excessivamente antigos a menos que sejam clássicos
     'primary_release_date.lte': (() => {
       const d = new Date();
-      d.setMonth(d.getMonth() - 4);
+      d.setMonth(d.getMonth() - 5); // Excluir lançamentos dos últimos 5 meses (mais rigoroso)
       return d.toISOString().split('T')[0];
-    })(), // Exclui filmes dos últimos 4 meses (geralmente ainda em cartaz)
-    'with_runtime.gte': '60', // Remove curtas e especiais (como Too Many Cooks)
+    })(),
+    'with_runtime.gte': '75', // Filtro rigoroso para evitar curtas e programas de TV (Too Many Cooks removido aqui)
+    'with_original_language': 'en|pt|fr|es|it|ja|ko', // Focar em cinemas consolidados
   };
 
   if (genreIds.length > 0) {
@@ -189,7 +209,9 @@ export const getDiscoverMovies = async (genres: string[], page = '1', excludeIds
     results = results.filter(m => !excludeIds.includes(m.id.toString()));
   }
 
-  return results;
+  return results.filter(m => 
+    !BANNED_TITLES.some(banned => m.title?.toLowerCase().includes(banned))
+  );
 };
 
 

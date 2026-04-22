@@ -15,19 +15,24 @@ export default function MovieSelection() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { addToWatchlist } = useUser();
+  const { addToWatchlist, userGenres } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     const fetchMovies = async () => {
-      const raw = sessionStorage.getItem('onboarding_genre_ids');
-      if (!raw) {
-        router.replace('/onboarding');
-        return;
+      if (userGenres.length === 0) {
+        // Fallback: se não tiver gêneros no contexto, tenta carregar do sessionStorage
+        const raw = sessionStorage.getItem('onboarding_genre_ids');
+        if (!raw) {
+          router.replace('/onboarding');
+          return;
+        }
       }
+
       try {
-        const genreIds = JSON.parse(raw) as number[];
-        const results = await getDiscoverMovies(genreIds.map(String));
+        setLoading(true);
+        // getDiscoverMovies espera os NOMES dos gêneros (ex: ['Ação', 'Drama'])
+        const results = await getDiscoverMovies(userGenres);
         // Pegar os 10 mais populares com poster
         const valid = results
           .filter(m => m.poster_path)
@@ -56,8 +61,7 @@ export default function MovieSelection() {
     setSaving(true);
 
     try {
-      const selected = movies.filter(m => selectedIds.includes(m.id));
-      await Promise.all(selected.map(m => addToWatchlist(m)));
+      // Filmes escolhidos apenas para referência de onboarding (não vão para a lista)
       sessionStorage.removeItem('onboarding_genre_ids');
       router.push('/discover');
     } catch {
