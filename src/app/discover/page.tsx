@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Movie } from '@/data/movies';
-import { getTrendingMovies, mapToMovie, getDiscoverMovies, getNowPlayingMovies, searchMovies } from '@/lib/tmdb';
+import { getTrendingMovies, mapToMovie, getDiscoverMovies, getNowPlayingMovies, searchMovies, TMDBMovie } from '@/lib/tmdb';
 import { getAIRecommendations } from '@/lib/ai';
 import Link from 'next/link';
 import styles from './discover.module.css';
@@ -59,14 +59,14 @@ export default function DiscoverPage() {
         if (cached && cached.length > 0) {
           setRecommended(cached.filter(m => !nowPlayingIds.includes(m.id)));
         } else if (userGenres.length > 0 || favoriteMovies.length > 0) {
-          let fresh: any[] = [];
+          let fresh: TMDBMovie[] = [];
           
           // ── Tenta Recomendações de IA (GROQ) ──
           const aiTitles = await getAIRecommendations(userGenres, favoriteMovies);
           
           if (aiTitles.length > 0) {
             const aiResults = await Promise.all(
-              aiTitles.map(async (title) => {
+              aiTitles.map(async (title: string) => {
                 try {
                   const searchData = await searchMovies(title);
                   return searchData[0] || null;
@@ -75,7 +75,7 @@ export default function DiscoverPage() {
                 }
               })
             );
-            fresh = aiResults.filter(m => m !== null);
+            fresh = aiResults.filter((m): m is TMDBMovie => m !== null);
           }
 
           // ── Fallback se IA falhar ou não houver recomendações ──
@@ -85,7 +85,7 @@ export default function DiscoverPage() {
           }
 
           const mapped = fresh
-            .filter(m => 
+            .filter((m: TMDBMovie) => 
               m.poster_path && 
               m.backdrop_path && 
               m.overview && 
