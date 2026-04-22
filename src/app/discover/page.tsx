@@ -91,7 +91,8 @@ export default function DiscoverPage() {
               m.overview && 
               m.overview.trim() !== '' &&
               !m.title?.toLowerCase().includes('too many cooks') &&
-              !m.title?.toLowerCase().includes('cooks')
+              !m.title?.toLowerCase().includes('cooks') &&
+              !favoriteMovies.some(fav => m.title?.toLowerCase() === fav.toLowerCase())
             )
             .map(mapToMovie);
           
@@ -108,7 +109,8 @@ export default function DiscoverPage() {
               m.overview && 
               m.overview.trim() !== '' &&
               !m.title?.toLowerCase().includes('too many cooks') &&
-              !m.title?.toLowerCase().includes('cooks')
+              !m.title?.toLowerCase().includes('cooks') &&
+              !favoriteMovies.some(fav => m.title?.toLowerCase() === fav.toLowerCase())
             )
             .map(mapToMovie);
           setRecommended(tmdbTrending.slice(0, 18));
