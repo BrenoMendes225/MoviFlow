@@ -21,6 +21,8 @@ interface UserContextType {
   isLoggedIn: boolean;
   loading: boolean;
   logout: () => Promise<void>;
+  favoriteMovies: string[];
+  setFavoriteMovies: (movies: string[]) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -34,6 +36,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [ratings, setRatings] = useState<Record<string, { rating: number; review: string }>>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [favoriteMovies, setFavoriteMoviesState] = useState<string[]>([]);
   
   const supabase = createClient();
 
@@ -45,6 +48,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setRatings({});
     setIsLoggedIn(false);
     setUser(null);
+    setFavoriteMoviesState([]);
   }, []);
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -52,13 +56,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       // 1. Fetch Profile (Genres and Avatar)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('genres, avatar_url')
+        .select('genres, avatar_url, favorite_movies')
         .eq('id', userId)
         .single();
       
       if (profile) {
         setUserGenresState(profile.genres || []);
         setAvatarUrlState(profile.avatar_url || null);
+        setFavoriteMoviesState(profile.favorite_movies || []);
       }
 
       // 2. Fetch Watchlist
@@ -153,6 +158,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await supabase.from('profiles').upsert({ id: user.id, genres, updated_at: new Date().toISOString() });
   };
 
+  const setFavoriteMovies = async (movies: string[]) => {
+    if (!user) return;
+    setFavoriteMoviesState(movies);
+    await supabase.from('profiles').upsert({ id: user.id, favorite_movies: movies, updated_at: new Date().toISOString() });
+  };
+
   const updateAvatar = async (url: string) => {
     if (!user) return;
     setAvatarUrlState(url);
@@ -241,6 +252,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         isLoggedIn,
         loading,
         logout,
+        favoriteMovies,
+        setFavoriteMovies,
       }}
     >
       {children}

@@ -15,7 +15,7 @@ export default function MovieSelection() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { addToWatchlist, userGenres } = useUser();
+  const { addToWatchlist, userGenres, setFavoriteMovies } = useUser();
   const router = useRouter();
 
   useEffect(() => {
@@ -62,6 +62,11 @@ export default function MovieSelection() {
 
     try {
       // Filmes escolhidos apenas para referência de onboarding (não vão para a lista)
+      const selectedTitles = movies
+        .filter(m => selectedIds.includes(m.id))
+        .map(m => m.title);
+      
+      await setFavoriteMovies(selectedTitles);
       sessionStorage.removeItem('onboarding_genre_ids');
       router.push('/discover');
     } catch {

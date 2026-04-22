@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Movie } from '@/data/movies';
-import { getTrendingMovies, mapToMovie, getDiscoverMovies, getNowPlayingMovies } from '@/lib/tmdb';
+import { getTrendingMovies, mapToMovie, getDiscoverMovies, getNowPlayingMovies, searchMovies } from '@/lib/tmdb';
+import { getAIRecommendations } from '@/lib/ai';
 import Link from 'next/link';
 import styles from './discover.module.css';
 
@@ -35,7 +36,13 @@ function setCachedRecommendations(movies: Movie[]) {
 }
 
 export default function DiscoverPage() {
-  const { userGenres, watchlist, addToWatchlist, removeFromWatchlist } = useUser();
+  const { 
+    userGenres, 
+    favoriteMovies, 
+    watchlist, 
+    addToWatchlist, 
+    removeFromWatchlist 
+  } = useUser();
   const [recommended, setRecommended] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,9 +57,32 @@ export default function DiscoverPage() {
         const cached = getCachedRecommendations();
         if (cached && cached.length > 0) {
           setRecommended(cached.filter(m => !nowPlayingIds.includes(m.id)));
-        } else if (userGenres.length > 0) {
-          const randomPage = Math.floor(Math.random() * 5) + 1;
-          const fresh = await getDiscoverMovies(userGenres, randomPage.toString(), nowPlayingIds);
+        } else if (userGenres.length > 0 || favoriteMovies.length > 0) {
+          let fresh: any[] = [];
+          
+          // ── Tenta Recomendações de IA (GROQ) ──
+          const aiTitles = await getAIRecommendations(userGenres, favoriteMovies);
+          
+          if (aiTitles.length > 0) {
+            const aiResults = await Promise.all(
+              aiTitles.map(async (title) => {
+                try {
+                  const searchData = await searchMovies(title);
+                  return searchData[0] || null;
+                } catch {
+                  return null;
+                }
+              })
+            );
+            fresh = aiResults.filter(m => m !== null);
+          }
+
+          // ── Fallback se IA falhar ou não houver recomendações ──
+          if (fresh.length === 0 && userGenres.length > 0) {
+            const randomPage = Math.floor(Math.random() * 5) + 1;
+            fresh = await getDiscoverMovies(userGenres, randomPage.toString(), nowPlayingIds);
+          }
+
           const mapped = fresh
             .filter(m => 
               m.poster_path && 
@@ -62,11 +92,11 @@ export default function DiscoverPage() {
               !m.title?.toLowerCase().includes('too many cooks') &&
               !m.title?.toLowerCase().includes('cooks')
             )
-            .slice(0, 18)
             .map(mapToMovie);
           
-          setCachedRecommendations(mapped);
-        setRecommended(mapped);
+          const finalSelection = mapped.slice(0, 18);
+          setCachedRecommendations(finalSelection);
+          setRecommended(finalSelection);
         } else {
           // Fallback se não houver gêneros ou recomendações
           const trendingData = await getTrendingMovies();
