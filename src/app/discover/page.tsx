@@ -102,7 +102,7 @@ export default function DiscoverPage() {
           // Fallback se não houver gêneros ou recomendações
           const trendingData = await getTrendingMovies();
           const tmdbTrending = trendingData
-            .filter((m: any) => 
+            .filter((m: TMDBMovie) => 
               m.poster_path && 
               m.backdrop_path && 
               m.overview && 
