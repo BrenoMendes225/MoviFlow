@@ -45,6 +45,7 @@ export default function DiscoverPage() {
   } = useUser();
   const [recommended, setRecommended] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     const load = async () => {
@@ -171,10 +172,40 @@ export default function DiscoverPage() {
       {recommended.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2>Recomendados Para Você</h2>
-            <span className={styles.refreshBadge}>🔄 Novos filmes todo dia</span>
+            <div className={styles.sectionTitleGroup}>
+              <h2>Recomendados Para Você</h2>
+              <span className={styles.refreshBadge}>🔄 Novos filmes todo dia</span>
+            </div>
+            <div className={styles.viewToggle}>
+              <button 
+                className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleActive : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Visualização em Grade"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </button>
+              <button 
+                className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.toggleActive : ''}`}
+                onClick={() => setViewMode('list')}
+                title="Visualização em Lista"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className={styles.movieGrid}>
+          <div className={`${styles.movieGrid} ${viewMode === 'list' ? styles.listView : ''}`}>
             {recommended.map(movie => (
               <Link href={`/movie/${movie.id}`} key={movie.id} className={styles.movieCard}>
                 <div className={styles.posterWrapper}>

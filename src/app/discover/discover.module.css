@@ -411,3 +411,83 @@
   .featuredContent h1 { font-size: 2rem; }
   .shuffleFAB { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 12px; }
 }
+
+/* View Toggle Styles */
+.sectionTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.viewToggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 10px;
+  gap: 4px;
+}
+
+.toggleBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.toggleActive {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* List View Layout */
+.listView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.listView .movieCard {
+  display: flex;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  align-items: center;
+  text-decoration: none;
+}
+
+.listView .posterWrapper {
+  width: 80px;
+  min-width: 80px;
+  margin-bottom: 0;
+  border-radius: 12px;
+}
+
+.listView .movieInfo {
+  flex: 1;
+}
+
+.listView .movieInfo h3 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.listView .movieInfo p {
+  font-size: 11px;
+}
+
+.listView .ratingBadge {
+  position: static;
+  margin-left: auto;
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
