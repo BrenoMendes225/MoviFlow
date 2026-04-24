@@ -59,26 +59,30 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     const fetchGlobalReviews = async () => {
       const supabase = (await import('@/utils/supabase/client')).createClient();
       try {
-        const { data, error } = await supabase
+        // Tenta buscar com JOIN (Recomendado)
+        let { data, error } = await supabase
           .from('ratings')
           .select(`
-            id,
-            rating,
-            review,
-            created_at,
-            user_id,
-            profiles (
-              full_name,
-              avatar_url
-            )
+            id, rating, review, created_at, user_id,
+            profiles (full_name, avatar_url)
           `)
           .eq('movie_id', id)
           .order('created_at', { ascending: false });
 
+        // Se falhar o JOIN (ex: SQL não rodou), tenta buscar apenas os ratings puramente
         if (error) {
-          console.error('Supabase error fetching ratings:', error);
-          throw error;
+          console.warn('JOIN failed, falling back to simple fetch:', error.message);
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('ratings')
+            .select('id, rating, review, created_at, user_id')
+            .eq('movie_id', id)
+            .order('created_at', { ascending: false });
+          
+          if (simpleError) throw simpleError;
+          data = simpleData;
         }
+
+        if (!data) return;
 
         // Fetch reactions for these reviews (fail-safe if table doesn't exist yet)
         let reviewsWithReactions = data.map(r => ({ ...r, likes: 0, dislikes: 0, userReaction: null }));
@@ -102,13 +106,13 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
               });
             }
           } catch (e) {
-            console.warn('Review reactions table might not exist yet:', e);
+            console.warn('Review reactions table might not exist yet');
           }
         }
 
         setGlobalReviews(reviewsWithReactions);
       } catch (err) {
-        console.error('Erro ao carregar reviews globais:', err);
+        console.error('Erro fatal ao carregar reviews globais:', err);
       } finally {
         setReviewLoading(false);
       }
