@@ -6,6 +6,24 @@ import { useUser } from '@/context/UserContext';
 import { getMovieDetails, mapToMovie, getWatchProviders, getImageUrl, WatchProviders, TMDBMovie, getNowPlayingMovies } from '@/lib/tmdb';
 import styles from './movie.module.css';
 
+interface CommunityReview {
+  id: string | number;
+  rating: number;
+  review: string;
+  created_at: string;
+  user_id: string;
+  profiles?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | {
+    full_name: string | null;
+    avatar_url: string | null;
+  }[];
+  likes?: number;
+  dislikes?: number;
+  userReaction?: string | null;
+}
+
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, ratings, addRating, addToWatchlist, removeFromWatchlist, watchlist } = useUser();
@@ -19,7 +37,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   const [userRating, setUserRating] = useState(ratings[id]?.rating || 0);
   const [userReview, setUserReview] = useState(ratings[id]?.review || '');
   const [isSaved, setIsSaved] = useState(false);
-  const [globalReviews, setGlobalReviews] = useState<any[]>([]);
+  const [globalReviews, setGlobalReviews] = useState<CommunityReview[]>([]);
   const [reviewLoading, setReviewLoading] = useState(true);
 
   useEffect(() => {
@@ -67,7 +85,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             profiles (full_name, avatar_url)
           `)
           .eq('movie_id', id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as { data: CommunityReview[] | null, error: any };
 
         // Se falhar o JOIN (ex: SQL não rodou), tenta buscar apenas os ratings puramente
         if (error) {
@@ -76,7 +94,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             .from('ratings')
             .select('id, rating, review, created_at, user_id')
             .eq('movie_id', id)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }) as { data: CommunityReview[] | null, error: any };
           
           if (simpleError) throw simpleError;
           data = simpleData;
@@ -153,7 +171,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     alert('Avaliação enviada! Obrigado.');
   };
 
-  const handleReaction = async (reviewId: string, type: 'like' | 'dislike') => {
+  const handleReaction = async (reviewId: string | number, type: 'like' | 'dislike') => {
     if (!user) {
       alert('Faça login para reagir a avaliações');
       return;
@@ -163,6 +181,8 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     
     // Check if same reaction exists
     const currentReview = globalReviews.find(r => r.id === reviewId);
+    if (!currentReview) return;
+
     if (currentReview.userReaction === type) {
       // Remove reaction
       await supabase.from('review_reactions').delete().eq('rating_id', reviewId).eq('user_id', user.id);
@@ -337,24 +357,26 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             <p>Carregando avaliações...</p>
           ) : globalReviews.length > 0 ? (
             <div className={styles.globalReviewsList}>
-              {globalReviews.map((review) => (
-                <div key={review.id} className={styles.globalReviewItem}>
-                  <div className={styles.globalReviewHeader}>
-                    <img 
-                      src={review.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.user_id}`} 
-                      className={styles.reviewerAvatar}
-                      alt="Avatar"
-                    />
-                    <div className={styles.reviewerInfo}>
-                      <h4>{review.profiles?.full_name || 'Usuário Anônimo'}</h4>
-                      <div className={styles.reviewerStars}>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} className={i < review.rating ? styles.starSmallActive : styles.starSmallInactive}>★</span>
-                        ))}
+              {globalReviews.map((review) => {
+                const profile = Array.isArray(review.profiles) ? review.profiles[0] : review.profiles;
+                return (
+                  <div key={review.id} className={styles.globalReviewItem}>
+                    <div className={styles.globalReviewHeader}>
+                      <img 
+                        src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.user_id}`} 
+                        className={styles.reviewerAvatar}
+                        alt="Avatar"
+                      />
+                      <div className={styles.reviewerInfo}>
+                        <h4>{profile?.full_name || 'Usuário Anônimo'}</h4>
+                        <div className={styles.reviewerStars}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} className={i < review.rating ? styles.starSmallActive : styles.starSmallInactive}>★</span>
+                          ))}
+                        </div>
                       </div>
+                      <span className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString()}</span>
                     </div>
-                    <span className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString()}</span>
-                  </div>
                   <p className={styles.reviewText}>{review.review}</p>
                   <div className={styles.reviewActions}>
                     <button 
@@ -371,7 +393,8 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
                     </button>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           ) : (
             <p className={styles.noReviews}>Seja o primeiro a avaliar este filme!</p>
