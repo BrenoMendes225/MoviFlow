@@ -90,7 +90,7 @@ export const fetchTMDB = async (endpoint: string, params: Record<string, string>
 };
 
 export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
-  if (!path) return '';
+  if (!path) return null;
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
 

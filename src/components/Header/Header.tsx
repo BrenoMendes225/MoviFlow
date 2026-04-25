@@ -124,7 +124,7 @@ export default function Header() {
                   className={styles.resultItem}
                   onClick={handleClose}
                 >
-                  <img src={movie.poster} alt={movie.title} className={styles.resultPoster} />
+                  <img src={movie.poster || '/placeholder-movie.png'} alt={movie.title} className={styles.resultPoster} />
                   <div className={styles.resultInfo}>
                     <span className={styles.resultTitle}>{movie.title}</span>
                     <span className={styles.resultMeta}>{movie.year} • {movie.genres[0]}</span>
